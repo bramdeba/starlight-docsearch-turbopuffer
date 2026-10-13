@@ -43,20 +43,20 @@
     "exports": {
       ".": {
         "types": "./dist/index.d.ts",
-        "import": "./dist/index.js"
+        "default": "./dist/index.js"
       },
       "./DocSearch.astro": "./dist/DocSearch.astro",
       "./schema": {
         "types": "./dist/schema.d.ts",
-        "import": "./dist/schema.js"
+        "default": "./dist/schema.js"
       },
       "./handler": {
         "types": "./dist/server/handler.d.ts",
-        "import": "./dist/server/handler.js"
+        "default": "./dist/server/handler.js"
       },
       "./route": {
         "types": "./dist/server/route.d.ts",
-        "import": "./dist/server/route.js"
+        "default": "./dist/server/route.js"
       }
     }
   },
