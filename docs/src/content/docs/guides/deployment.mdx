@@ -1,0 +1,123 @@
+---
+title: Deployment
+description: Run the search endpoint with an Astro adapter or as a standalone function.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Search queries go through a small endpoint that holds your turbopuffer API key. You can run it as part of your Astro site or deploy it separately.
+
+## With an Astro adapter
+
+If your site uses an [Astro adapter](https://docs.astro.build/en/guides/on-demand-rendering/), the plugin adds an on-demand route at `/api/search` (under your `base`). Your docs pages stay prerendered; only the search route runs on demand.
+
+Set these environment variables where your site runs:
+
+| Variable | Description |
+| --- | --- |
+| `TURBOPUFFER_READ_API_KEY` | A read-only API key. Falls back to `TURBOPUFFER_API_KEY`. |
+| `TURBOPUFFER_REGION` | Your turbopuffer region, unless you set the `region` option. |
+
+The route reads them with [`getSecret()`](https://docs.astro.build/en/reference/modules/astro-env/#getsecret), so it works with every adapter, including Cloudflare.
+
+During `astro dev`, the route is always available, adapter or not, and reads the variables from `.env`.
+
+## As a standalone function
+
+For a fully static site, deploy the search handler on its own and point the plugin to it with the `endpoint` option:
+
+```js title="astro.config.mjs"
+starlightDocSearchTurbopuffer({
+	namespace: 'my-docs',
+	region: 'gcp-europe-west1',
+	endpoint: 'https://search.example.com/',
+});
+```
+
+`createSearchHandler()` takes a standard `Request` and returns a `Response`, so it runs on any modern runtime. Use the same `namespace` and `search` options as in your Astro config, and allow your docs origin to call it with `allowedOrigins`.
+
+<Tabs syncKey="runtime">
+<TabItem label="Cloudflare Workers">
+
+```ts title="src/worker.ts"
+import { createSearchHandler } from 'starlight-docsearch-turbopuffer/handler';
+
+interface Env {
+	TURBOPUFFER_API_KEY: string;
+}
+
+let handler: ReturnType<typeof createSearchHandler> | undefined;
+
+export default {
+	fetch(request: Request, env: Env) {
+		handler ??= createSearchHandler({
+			apiKey: env.TURBOPUFFER_API_KEY,
+			region: 'gcp-europe-west1',
+			namespace: 'my-docs',
+			allowedOrigins: ['https://docs.example.com'],
+		});
+		return handler(request);
+	},
+};
+```
+
+Store the key as a secret: `npx wrangler secret put TURBOPUFFER_API_KEY`.
+
+</TabItem>
+<TabItem label="Vercel">
+
+```ts title="api/search.ts"
+import { createSearchHandler } from 'starlight-docsearch-turbopuffer/handler';
+
+const handler = createSearchHandler({
+	apiKey: process.env.TURBOPUFFER_READ_API_KEY!,
+	region: 'gcp-europe-west1',
+	namespace: 'my-docs',
+});
+
+export function GET(request: Request) {
+	return handler(request);
+}
+```
+
+</TabItem>
+<TabItem label="Netlify">
+
+```ts title="netlify/functions/search.ts"
+import { createSearchHandler } from 'starlight-docsearch-turbopuffer/handler';
+
+const handler = createSearchHandler({
+	apiKey: Netlify.env.get('TURBOPUFFER_READ_API_KEY')!,
+	region: 'gcp-europe-west1',
+	namespace: 'my-docs',
+});
+
+export default (request: Request) => handler(request);
+
+export const config = { path: '/api/search' };
+```
+
+</TabItem>
+<TabItem label="Deno / Bun">
+
+```ts title="server.ts"
+import { createSearchHandler } from 'starlight-docsearch-turbopuffer/handler';
+
+const handler = createSearchHandler({
+	apiKey: process.env.TURBOPUFFER_READ_API_KEY!,
+	region: 'gcp-europe-west1',
+	namespace: 'my-docs',
+	allowedOrigins: ['https://docs.example.com'],
+});
+
+Deno.serve(handler); // or: Bun.serve({ fetch: handler });
+```
+
+</TabItem>
+</Tabs>
+
+## Protecting your quota
+
+Every search costs a turbopuffer query and a few embedding tokens. The endpoint limits what a request can do: it only queries your namespace, caps the query length at 256 characters, and sets a `Cache-Control` header so repeated queries can be served from a CDN. The browser also waits for a pause in typing before sending a query.
+
+To protect against abuse, add rate limiting in front of the endpoint, for example with [Cloudflare rate limiting rules](https://developers.cloudflare.com/waf/rate-limiting-rules/) or your platform’s firewall.

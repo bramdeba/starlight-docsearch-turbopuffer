@@ -1,0 +1,35 @@
+---
+title: Starlight DocSearch turbopuffer
+description: Hybrid semantic and keyword search for Starlight, powered by turbopuffer.
+template: splash
+hero:
+  tagline: Hybrid semantic + keyword search for your Starlight docs, powered by turbopuffer native embeddings and the DocSearch modal.
+  actions:
+    - text: Get started
+      link: /getting-started/
+      icon: right-arrow
+    - text: How it works
+      link: /guides/how-it-works/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+<CardGrid>
+	<Card title="Hybrid search" icon="magnifier">
+		Every query runs semantic (vector) and keyword (BM25) search in one request, fused with
+		reciprocal rank fusion. Readers find pages by meaning, not only exact words.
+	</Card>
+	<Card title="Native embeddings" icon="rocket">
+		turbopuffer embeds your content and every query server-side. No embedding provider, no vectors
+		to manage.
+	</Card>
+	<Card title="Indexes on build" icon="setting">
+		Pages are split into sections and synced after `astro build`. Unchanged sections are never
+		re-embedded.
+	</Card>
+	<Card title="Familiar UI" icon="puzzle">
+		The DocSearch v5 modal, themed to match Starlight, with recent searches, favorites and keyboard
+		shortcuts.
+	</Card>
+</CardGrid>

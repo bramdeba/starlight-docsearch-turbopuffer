@@ -1,0 +1,193 @@
+---
+import '@docsearch/css/dist/_variables.css';
+import '@docsearch/css/dist/modal.css';
+import './variables.css';
+
+type SidebarEntry = (typeof Astro.locals.starlightRoute.sidebar)[number];
+
+const { starlightRoute, t } = Astro.locals;
+
+const pick = (keyStart: string) =>
+	Object.fromEntries(
+		Object.entries(t.all())
+			.filter(([key]) => key.startsWith(keyStart))
+			.map(([key, value]) => [key.replace(keyStart, ''), value])
+	);
+
+const translations = {
+	placeholder: t('search.label'),
+	translations: {
+		button: {
+			buttonText: t('search.label'),
+			buttonAriaLabel: t('search.label'),
+		},
+		modal: {
+			searchBox: pick('docsearch.searchBox.'),
+			startScreen: pick('docsearch.startScreen.'),
+			errorScreen: pick('docsearch.errorScreen.'),
+			footer: pick('docsearch.footer.'),
+			noResultsScreen: pick('docsearch.noResultsScreen.'),
+		},
+	},
+};
+
+/** Label of the top-level sidebar group containing the current page, used to group results. */
+function topLevelGroup(entries: SidebarEntry[], group?: string): { label?: string } | undefined {
+	for (const entry of entries) {
+		if (entry.type === 'link' && entry.isCurrent) return { label: group };
+		if (entry.type === 'group') {
+			const found = topLevelGroup(entry.entries, group ?? entry.label);
+			if (found) return found;
+		}
+	}
+	return undefined;
+}
+
+const lvl0 = topLevelGroup(starlightRoute.sidebar)?.label;
+---
+
+<sl-doc-search
+	data-lang={starlightRoute.lang}
+	data-lvl0={lvl0}
+	data-translations={JSON.stringify(translations)}
+>
+	<button type="button" class="DocSearch DocSearch-Button" aria-label={t('search.label')}>
+		<span class="DocSearch-Button-Container">
+			<svg width="20" height="20" class="DocSearch-Search-Icon" viewBox="0 0 20 20" aria-hidden="true">
+				<path
+					d="M14.386 14.386l4.0877 4.0877-4.0877-4.0877c-2.9418 2.9419-7.7115 2.9419-10.6533 0-2.9419-2.9418-2.9419-7.7115 0-10.6533 2.9418-2.9419 7.7115-2.9419 10.6533 0 2.9419 2.9418 2.9419 7.7115 0 10.6533z"
+					stroke="currentColor"
+					fill="none"
+					fill-rule="evenodd"
+					stroke-linecap="round"
+					stroke-linejoin="round"></path>
+			</svg>
+			<span class="DocSearch-Button-Placeholder">{t('search.label')}</span>
+		</span>
+		<span class="DocSearch-Button-Keys"></span>
+	</button>
+</sl-doc-search>
+
+<style is:global>
+	.DocSearch-Button {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		border: 0;
+		background-color: transparent;
+		color: var(--sl-color-gray-1);
+		cursor: pointer;
+		height: 2.5rem;
+		font-size: var(--sl-text-xl);
+	}
+	.DocSearch-Button-Container {
+		display: contents;
+	}
+	.DocSearch-Search-Icon {
+		width: 0.875em;
+		height: 0.875em;
+		stroke-width: 0.125rem;
+	}
+	.DocSearch-Button-Placeholder,
+	.DocSearch-Button-Keys {
+		display: none;
+	}
+
+	@media (min-width: 50rem) {
+		sl-doc-search {
+			width: 100%;
+		}
+
+		.DocSearch-Button {
+			border: 1px solid var(--sl-color-gray-5);
+			border-radius: 0.5rem;
+			padding-inline-start: 0.75rem;
+			padding-inline-end: 0.5rem;
+			background-color: var(--sl-color-black);
+			color: var(--sl-color-gray-2);
+			font-size: var(--sl-text-sm);
+			width: 100%;
+			max-width: 22rem;
+		}
+		.DocSearch-Button:hover {
+			border-color: var(--sl-color-gray-2);
+			color: var(--sl-color-white);
+		}
+
+		.DocSearch-Button-Placeholder,
+		.DocSearch-Button-Keys {
+			display: flex;
+		}
+		.DocSearch-Button-Keys {
+			gap: 0.25rem;
+			margin-inline-start: auto;
+		}
+		.DocSearch-Button-Key {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			min-width: 1.25rem;
+			height: 1.25rem;
+			padding-inline: 0.25rem;
+			border: 1px solid var(--sl-color-gray-5);
+			border-radius: 0.25rem;
+			background-color: var(--sl-color-bg-inline-code);
+			color: var(--sl-color-gray-2);
+			font-family: var(--sl-font);
+			font-size: var(--sl-text-xs);
+		}
+		.DocSearch-Button-Key--pressed {
+			border-color: var(--sl-color-gray-3);
+		}
+	}
+</style>
+
+<script>
+	import config from 'virtual:starlight-docsearch-turbopuffer/client-config';
+	import clientOptions from 'virtual:starlight-docsearch-turbopuffer/client-options';
+	import { createTurbopufferSearchClient } from './client/search-client';
+	import { namespaceFor } from './shared/options';
+
+	class StarlightDocSearch extends HTMLElement {
+		constructor() {
+			super();
+			const lang = this.dataset.lang || document.documentElement.lang || 'en';
+			const client = createTurbopufferSearchClient({
+				endpoint: config.endpoint,
+				lang,
+				debounce: config.debounce,
+				// Lets CSS hide DocSearch’s “No results” screen while results are still loading.
+				onLoadingChange: (loading) =>
+					document.documentElement.toggleAttribute('data-docsearch-loading', loading),
+			});
+			// Warm turbopuffer’s cache as soon as the user shows intent to search.
+			for (const event of ['pointerenter', 'focusin', 'touchstart']) {
+				this.addEventListener(event, () => client.warm(), { once: true, passive: true });
+			}
+
+			window.addEventListener('DOMContentLoaded', async () => {
+				const { default: docsearch } = await import('@docsearch/js/docsearch');
+				let translations = {};
+				try {
+					translations = JSON.parse(this.dataset.translations || '{}');
+				} catch {}
+				docsearch({
+					// DocSearch requires Algolia credentials; the search client below replaces Algolia.
+					appId: 'turbopuffer',
+					apiKey: 'turbopuffer',
+					indices: [namespaceFor(config.namespace, lang)],
+					...config.docsearch,
+					...translations,
+					...clientOptions,
+					container: this,
+					transformSearchClient: () => client as never,
+					onOpen: () => {
+						client.warm();
+						clientOptions.onOpen?.();
+					},
+				});
+			});
+		}
+	}
+	customElements.define('sl-doc-search', StarlightDocSearch);
+</script>

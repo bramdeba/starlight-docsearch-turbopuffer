@@ -1,0 +1,22 @@
+{
+  "name": "starlight-docsearch-turbopuffer-monorepo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --filter starlight-docsearch-turbopuffer build",
+    "test": "pnpm --filter starlight-docsearch-turbopuffer test",
+    "typecheck": "pnpm --filter starlight-docsearch-turbopuffer typecheck",
+    "docs:dev": "pnpm --filter docs dev",
+    "docs:build": "pnpm --filter docs build",
+    "changeset": "changeset",
+    "version": "changeset version",
+    "release": "pnpm build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^3.0.3"
+  },
+  "packageManager": "pnpm@10.30.3",
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

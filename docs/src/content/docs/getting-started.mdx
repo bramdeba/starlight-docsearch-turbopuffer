@@ -1,0 +1,99 @@
+---
+title: Getting started
+description: Add turbopuffer hybrid search to a Starlight site.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+`starlight-docsearch-turbopuffer` replaces Starlight’s built-in Pagefind search with hybrid search on [turbopuffer](https://turbopuffer.com). It indexes your site when you build it and serves results through a small search endpoint, so your turbopuffer API key never reaches the browser.
+
+## Prerequisites
+
+- A Starlight site using Astro 6 or 7 and Starlight 0.38 or later.
+- A [turbopuffer](https://turbopuffer.com) account and an API key with write access.
+- Somewhere to run the search endpoint: an [Astro adapter](https://docs.astro.build/en/guides/on-demand-rendering/) (Vercel, Netlify, Cloudflare, Node.js), or a separately deployed function. See [Deployment](/guides/deployment/).
+
+## Installation
+
+<Steps>
+
+1. Install the plugin:
+
+   ```sh
+   npm install starlight-docsearch-turbopuffer
+   ```
+
+2. Add the plugin to Starlight in `astro.config.mjs` and choose a namespace:
+
+   ```js ins={3,10-14}
+   import starlight from '@astrojs/starlight';
+   import { defineConfig } from 'astro/config';
+   import starlightDocSearchTurbopuffer from 'starlight-docsearch-turbopuffer';
+
+   export default defineConfig({
+   	integrations: [
+   		starlight({
+   			title: 'My docs',
+   			plugins: [
+   				starlightDocSearchTurbopuffer({
+   					namespace: 'my-docs',
+   					region: 'gcp-europe-west1',
+   				}),
+   			],
+   		}),
+   	],
+   });
+   ```
+
+3. Set your turbopuffer API key in the environment, for example in `.env`:
+
+   ```sh title=".env"
+   TURBOPUFFER_API_KEY=tpuf_...
+   ```
+
+4. Build your site. After the build, the plugin extracts every page, splits it into sections and syncs them to turbopuffer:
+
+   ```sh
+   npm run build
+   ```
+
+   ```txt
+   [starlight-docsearch-turbopuffer] Extracted search records: 214 in my-docs.
+   [starlight-docsearch-turbopuffer] my-docs: 214 upserted, 0 deleted, 0 unchanged, 31260 embedding tokens
+   ```
+
+5. Run your site with an adapter, or deploy the search handler. Press <kbd>Ctrl</kbd>+<kbd>K</kbd> (<kbd>⌘</kbd>+<kbd>K</kbd> on macOS) to search.
+
+</Steps>
+
+## Use a read-only key for search
+
+The search endpoint only reads. Create a **Read only** API key in the turbopuffer dashboard and expose it to the endpoint as `TURBOPUFFER_READ_API_KEY`. Keep the write key (`TURBOPUFFER_API_KEY`) in your build environment only.
+
+## Translate the search UI
+
+The modal uses Starlight’s `search.label` string for the button and placeholder. To translate the rest of the modal, extend Starlight’s i18n schema and add `docsearch.*` keys to your translation files:
+
+```ts title="src/content.config.ts" ins={4,9}
+import { defineCollection } from 'astro:content';
+import { docsLoader, i18nLoader } from '@astrojs/starlight/loaders';
+import { docsSchema, i18nSchema } from '@astrojs/starlight/schema';
+import { docSearchI18nSchema } from 'starlight-docsearch-turbopuffer/schema';
+
+export const collections = {
+	docs: defineCollection({ loader: docsLoader(), schema: docsSchema() }),
+	i18n: defineCollection({
+		loader: i18nLoader(),
+		schema: i18nSchema({ extend: docSearchI18nSchema() }),
+	}),
+};
+```
+
+```json title="src/content/i18n/fr.json"
+{
+	"docsearch.footer.selectText": "Sélectionner",
+	"docsearch.noResultsScreen.noResultsText": "Aucun résultat pour"
+}
+```
+
+The keys follow DocSearch v5. If you are migrating from `@astrojs/starlight-docsearch`, note that `searchBox.resetButton*` and `searchBox.cancelButton*` are now `searchBox.clearButton*` and `searchBox.closeButton*`.

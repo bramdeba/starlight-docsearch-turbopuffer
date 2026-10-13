@@ -1,0 +1,85 @@
+{
+  "name": "starlight-docsearch-turbopuffer",
+  "version": "0.1.0",
+  "description": "Hybrid (semantic + keyword) search for Starlight, powered by turbopuffer and the DocSearch modal",
+  "keywords": [
+    "starlight",
+    "starlight-plugin",
+    "astro",
+    "docsearch",
+    "turbopuffer",
+    "search",
+    "hybrid-search"
+  ],
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bramdeba/starlight-docsearch-turbopuffer.git",
+    "directory": "packages/starlight-docsearch-turbopuffer"
+  },
+  "homepage": "https://github.com/bramdeba/starlight-docsearch-turbopuffer#readme",
+  "bugs": "https://github.com/bramdeba/starlight-docsearch-turbopuffer/issues",
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist"
+  ],
+  "bin": {
+    "starlight-docsearch-turbopuffer": "./dist/cli.js"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./DocSearch.astro": "./src/DocSearch.astro",
+    "./schema": "./src/schema.ts",
+    "./handler": "./src/server/handler.ts",
+    "./route": "./src/server/route.ts"
+  },
+  "publishConfig": {
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./DocSearch.astro": "./dist/DocSearch.astro",
+      "./schema": {
+        "types": "./dist/schema.d.ts",
+        "import": "./dist/schema.js"
+      },
+      "./handler": {
+        "types": "./dist/server/handler.d.ts",
+        "import": "./dist/server/handler.js"
+      },
+      "./route": {
+        "types": "./dist/server/route.d.ts",
+        "import": "./dist/server/route.js"
+      }
+    }
+  },
+  "peerDependencies": {
+    "@astrojs/starlight": ">=0.38.0",
+    "astro": "^6.0.0 || ^7.0.0"
+  },
+  "dependencies": {
+    "@docsearch/css": "^5.1.2",
+    "@docsearch/js": "^5.1.2",
+    "@turbopuffer/turbopuffer": "^2.11.0",
+    "node-html-parser": "^9.0.4"
+  },
+  "devDependencies": {
+    "@astrojs/starlight": "^0.42.6",
+    "@types/node": "^24.0.0",
+    "astro": "^7.3.8",
+    "publint": "^0.3.25",
+    "tsdown": "^0.23.1",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

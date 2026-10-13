@@ -1,0 +1,55 @@
+/* Map DocSearch’s variables to Starlight’s theme. `[data-theme]` matches the specificity of
+   DocSearch’s own dark-mode rules so these overrides apply in both themes. */
+:root[data-theme] {
+	--docsearch-font-family: var(--sl-font);
+	--docsearch-primary-color: var(--sl-color-text-accent);
+	--docsearch-primary-dark-color: var(--sl-color-text-accent);
+	--docsearch-soft-primary-color: var(--sl-color-accent-low);
+	--docsearch-highlight-color: var(--sl-color-text-accent);
+	--docsearch-focus-color: var(--sl-color-text-accent);
+	--docsearch-text-color: var(--sl-color-text);
+	--docsearch-secondary-text-color: var(--sl-color-gray-3);
+	--docsearch-subtle-color: var(--sl-color-gray-5);
+	--docsearch-muted-color: var(--sl-color-gray-3);
+	--docsearch-icon-color: var(--sl-color-gray-3);
+	--docsearch-background-color: var(--sl-color-gray-6);
+	--docsearch-container-background: var(--sl-color-backdrop-overlay);
+	--docsearch-border-radius: 0.5rem;
+
+	/* modal */
+	--docsearch-modal-width: 640px;
+	--docsearch-modal-background: var(--sl-color-bg-nav);
+	--docsearch-modal-shadow: var(--sl-shadow-lg);
+
+	/* searchbox */
+	--docsearch-searchbox-background: var(--sl-color-black);
+	--docsearch-searchbox-focus-background: var(--sl-color-black);
+
+	/* hit */
+	--docsearch-hit-color: var(--sl-color-white);
+	--docsearch-hit-background: var(--sl-color-black);
+	--docsearch-hit-focus-background: var(--sl-color-accent-low);
+	--docsearch-hit-highlight-color: var(--sl-color-accent-low);
+
+	/* key */
+	--docsearch-key-background: var(--sl-color-bg-inline-code);
+	--docsearch-key-color: var(--sl-color-gray-2);
+
+	/* footer */
+	--docsearch-footer-background: var(--sl-color-black);
+	--docsearch-footer-shadow: 0 -1px 0 0 var(--sl-color-hairline-light);
+}
+
+.DocSearch-Modal {
+	border: 1px solid var(--sl-color-hairline-light);
+}
+
+/* Results come from turbopuffer, not Algolia. */
+.DocSearch-Logo {
+	display: none;
+}
+
+/* DocSearch renders “No results” as soon as a query is typed, before results arrive. */
+:root[data-docsearch-loading] .DocSearch-NoResults {
+	visibility: hidden;
+}

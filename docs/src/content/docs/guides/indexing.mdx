@@ -1,0 +1,74 @@
+---
+title: Indexing
+description: Control when and what the plugin indexes.
+---
+
+## When indexing runs
+
+By default (`indexing.enabled: 'auto'`), the plugin syncs to turbopuffer at the end of `astro build` when the `TURBOPUFFER_API_KEY` environment variable is set. It reads the variable from the environment or from your `.env` files.
+
+Every build also writes the extracted records to a manifest at `node_modules/.astro/starlight-docsearch-turbopuffer/manifest.json`, whether or not it syncs.
+
+### Skip indexing for preview builds
+
+Preview deployments should usually not change your production index. Disable indexing based on your platform’s environment:
+
+```js title="astro.config.mjs"
+starlightDocSearchTurbopuffer({
+	namespace: 'my-docs',
+	indexing: {
+		// Vercel: only index production deployments.
+		enabled: process.env.VERCEL_ENV === 'production',
+	},
+});
+```
+
+### Index in a separate CI step
+
+To keep builds independent of turbopuffer, disable indexing in the build and run the CLI afterwards:
+
+```js title="astro.config.mjs"
+starlightDocSearchTurbopuffer({ namespace: 'my-docs', indexing: { enabled: false } });
+```
+
+```yaml title=".github/workflows/deploy.yml"
+- run: npm run build
+- run: npx starlight-docsearch-turbopuffer sync
+  if: github.ref == 'refs/heads/main'
+  env:
+    TURBOPUFFER_API_KEY: ${{ secrets.TURBOPUFFER_API_KEY }}
+```
+
+See the [CLI reference](/reference/cli/).
+
+## What gets indexed
+
+- Every page Starlight renders, except pages with `pagefind: false` in their frontmatter and 404 pages.
+- Content inside `.sl-markdown-content`. Change this with `indexing.contentSelector`.
+- Text, lists, tables and code blocks. Anchor links, copy buttons and elements marked `data-pagefind-ignore` are skipped.
+
+Leave out more with `indexing.exclude` (URL path patterns) and `indexing.ignoreSelectors` (CSS selectors):
+
+```js
+starlightDocSearchTurbopuffer({
+	namespace: 'my-docs',
+	indexing: {
+		exclude: ['/blog/**', '/changelog/'],
+		ignoreSelectors: ['.contributors', 'details.internal'],
+	},
+});
+```
+
+## Incremental updates
+
+Records have stable IDs based on their URL and position, and a hash of their content. On each sync, the plugin compares hashes with what is stored in turbopuffer and only writes changed records. Embedding tokens are only spent on content that changed.
+
+## Changing the embedding model
+
+turbopuffer cannot change the embedding model of an existing namespace. After changing `embedding.model`, `embedding.dimensions` or `distanceMetric`, re-index from scratch:
+
+```sh
+npx starlight-docsearch-turbopuffer sync --reset
+```
+
+Alternatively, change the `namespace` and deploy the new index alongside the old one, then delete the old namespace from the turbopuffer dashboard.
