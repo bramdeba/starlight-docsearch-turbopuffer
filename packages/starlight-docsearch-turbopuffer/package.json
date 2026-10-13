@@ -1,6 +1,6 @@
 {
   "name": "starlight-docsearch-turbopuffer",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Hybrid (semantic + keyword) search for Starlight, powered by turbopuffer and the DocSearch modal",
   "keywords": [
     "starlight",

@@ -235,7 +235,15 @@ cp .env.example .env # add a turbopuffer API key
 pnpm docs:build      # build the docs site and index it
 ```
 
-The repository contains the plugin in `packages/starlight-docsearch-turbopuffer` and its documentation site in `docs`. Releases use [changesets](https://github.com/changesets/changesets).
+The repository contains the plugin in `packages/starlight-docsearch-turbopuffer` and its documentation site in `docs`.
+
+Releases use [changesets](https://github.com/changesets/changesets):
+
+```sh
+pnpm changeset          # describe a change
+pnpm version-packages   # bump versions and update the changelog
+pnpm release            # build and publish to npm
+```
 
 ## Credits
 
